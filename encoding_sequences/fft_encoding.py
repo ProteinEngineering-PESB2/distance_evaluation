@@ -3,21 +3,25 @@ from scipy.fft import fft
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from utils.utils_functions import utils_functions
+from utils_module.utils_functions import utils_functions
 
 class fft_encoding(object):
 
-    def __init__(self, dataset, size_data, column_response, constant_instance):
+    def __init__(self, dataset, size_data, column_response, column_id_seq, constant_instance):
         self.dataset = dataset
         self.size_data = size_data
         self.column_response = column_response
+        self.column_id_seq = column_id_seq
         self.constant_instance = constant_instance
+
+        self.init_process()
 
     def __processing_data_to_fft(self):
 
         print("Processin data")
         self.responses = self.dataset[self.column_response]
-        self.dataset = self.dataset.drop(columns=[self.column_response])
+        self.id_seqs = self.dataset[self.column_id_seq]
+        self.dataset = self.dataset.drop(columns=[self.column_response, self.column_id_seq])
 
     def __get_near_pow(self):
 
@@ -63,7 +67,7 @@ class fft_encoding(object):
         yf = np.abs(yf[0:self.stop_value // 2])
         return [value for value in yf]
 
-    def encoding_dataset(self, name_export):
+    def encoding_dataset(self, name_export, is_export):
 
         print("Start FFT encoding process")
         data_process_FFT = Parallel(n_jobs=self.constant_instance.n_cores, require='sharedmem')(delayed(self.__apply_FFT)(i) for i in range(len(self.dataset)))
@@ -78,6 +82,8 @@ class fft_encoding(object):
         print("Export dataset")
         df_data = pd.DataFrame(matrix_data, columns=header)
         df_data[self.column_response] = self.responses
+        df_data[self.column_id_seq] = self.id_seqs
 
-        print(name_export)
-        utils_functions().export_csv(df_data, name_export)
+        if is_export:
+            print(name_export)
+            utils_functions().export_csv(df_data, name_export)

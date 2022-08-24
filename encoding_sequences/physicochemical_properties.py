@@ -69,8 +69,8 @@ class physicochemical_encoder(object):
 
         print("Creating dataset")
         header = ['p_{}'.format(i) for i in range(len(matrix_data[0])-2)]
-        header.append('response')
-        header.insert(0, 'id_seq')
+        header.append(self.name_column_response)
+        header.insert(0, self.name_column_id)
         print("Export dataset")
         df_data = pd.DataFrame(matrix_data, columns=header)
 
