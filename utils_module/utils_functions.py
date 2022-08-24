@@ -1,8 +1,8 @@
 from Bio.PDB import *
+from Bio import SeqIO
 import pandas as pd
 from joblib import dump
 from scipy.spatial import distance
-
 
 class utils_functions(object):
 
@@ -76,6 +76,18 @@ class utils_functions(object):
             return True
         except:
             return False
+
+    def fasta_to_csv(self, document_to_process, separator_response):
+
+        matrix_data = []
+        with open(document_to_process) as handle:
+            for record in SeqIO.parse(handle, "fasta"):
+
+                response = record.description.split(separator_response)[-1].strip()
+                row = [record.id, response, str(record.seq)]
+                matrix_data.append(row)
+        df_data = pd.DataFrame(matrix_data, columns=['id', 'response', 'seq'])
+        return df_data
 
     def run_external_command(self, command, path, name_export):
 

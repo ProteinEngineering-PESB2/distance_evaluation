@@ -1,6 +1,6 @@
 import pandas as pd
 from joblib import Parallel, delayed
-from utils.utils_functions import utils_functions
+from utils_module.utils_functions import utils_functions
 
 class physicochemical_encoder(object):
 
@@ -10,6 +10,7 @@ class physicochemical_encoder(object):
                  dataset_encoder,
                  constant_instance,
                  name_column_seq,
+                 name_column_id,
                  name_column_response):
 
         self.dataset = dataset
@@ -17,6 +18,7 @@ class physicochemical_encoder(object):
         self.dataset_encoder = dataset_encoder
         self.constant_instance = constant_instance
         self.name_column_seq = name_column_seq
+        self.name_column_id = name_column_id
         self.name_column_response = name_column_response
 
         self.zero_padding = self.check_max_size()
@@ -38,7 +40,7 @@ class physicochemical_encoder(object):
         size_list = [len(seq) for seq in self.dataset[self.name_column_seq]]
         return max(size_list)
 
-    def __encoding_sequence(self, sequence, response):
+    def __encoding_sequence(self, sequence, response, id_seq):
 
         sequence = sequence.upper()
         sequence_encoding = []
@@ -52,11 +54,13 @@ class physicochemical_encoder(object):
             sequence_encoding.append(0)
 
         sequence_encoding.append(response)
+        sequence_encoding.insert(0, id_seq)
         return sequence_encoding
 
     def encoding_dataset(self, name_export, is_export):
-        print("Start encoding process")
-        data_encoding = Parallel(n_jobs=self.constant_instance.n_cores, require='sharedmem')(delayed(self.__encoding_sequence)(self.dataset[self.name_column_seq][i], self.dataset[self.name_column_response][i]) for i in range(len(self.dataset)))
+
+        #print("Start encoding process")
+        data_encoding = Parallel(n_jobs=self.constant_instance.n_cores, require='sharedmem')(delayed(self.__encoding_sequence)(self.dataset[self.name_column_seq][i], self.dataset[self.name_column_response][i], self.dataset[self.name_column_id][i]) for i in range(len(self.dataset)))
 
         print("Processing results")
         matrix_data = []
@@ -64,9 +68,9 @@ class physicochemical_encoder(object):
             matrix_data.append(element)
 
         print("Creating dataset")
-        header = ['p_{}'.format(i) for i in range(len(matrix_data[0])-1)]
+        header = ['p_{}'.format(i) for i in range(len(matrix_data[0])-2)]
         header.append('response')
-
+        header.insert(0, 'id_seq')
         print("Export dataset")
         df_data = pd.DataFrame(matrix_data, columns=header)
 
